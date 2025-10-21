@@ -4,12 +4,16 @@ Query builder utilities for handling pagination, filtering, and ordering.
 from typing import Dict, List, Optional, Any, Tuple
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+import re
 
 
 class QueryBuilder:
     """
     A utility class to build SQL queries with pagination, filtering, and ordering.
     """
+    
+    # Regex pattern for valid SQL identifiers (column/table names)
+    IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)?$')
     
     def __init__(self, base_query: str):
         """
@@ -21,6 +25,41 @@ class QueryBuilder:
         self.base_query = base_query.strip()
         if self.base_query.endswith(';'):
             self.base_query = self.base_query[:-1]
+    
+    @staticmethod
+    def validate_identifier(identifier: str) -> bool:
+        """
+        Validate that a string is a safe SQL identifier.
+        
+        Args:
+            identifier: The identifier to validate (column or table name)
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        return bool(QueryBuilder.IDENTIFIER_PATTERN.match(identifier))
+    
+    @staticmethod
+    def sanitize_identifier(identifier: str) -> str:
+        """
+        Sanitize and validate a SQL identifier.
+        
+        Args:
+            identifier: The identifier to sanitize
+            
+        Returns:
+            The sanitized identifier
+            
+        Raises:
+            ValueError: If the identifier is invalid
+        """
+        # Remove any whitespace
+        identifier = identifier.strip()
+        
+        if not QueryBuilder.validate_identifier(identifier):
+            raise ValueError(f"Invalid SQL identifier: {identifier}")
+        
+        return identifier
     
     def apply_filters(
         self,
@@ -36,6 +75,9 @@ class QueryBuilder:
             
         Returns:
             Tuple of (modified_query, params_dict)
+            
+        Raises:
+            ValueError: If any column name is invalid
         """
         if not filters:
             return query, {}
@@ -47,11 +89,14 @@ class QueryBuilder:
         has_where = 'WHERE' in query.upper()
         
         for idx, (column, value) in enumerate(filters.items()):
+            # Validate column name to prevent SQL injection
+            sanitized_column = self.sanitize_identifier(column)
+            
             param_name = f"filter_{idx}"
             if value is None:
-                where_clauses.append(f"{column} IS NULL")
+                where_clauses.append(f"{sanitized_column} IS NULL")
             else:
-                where_clauses.append(f"{column} = :{param_name}")
+                where_clauses.append(f"{sanitized_column} = :{param_name}")
                 params[param_name] = value
         
         if where_clauses:
@@ -74,6 +119,9 @@ class QueryBuilder:
             
         Returns:
             Modified query with ORDER BY clause
+            
+        Raises:
+            ValueError: If any column name is invalid
         """
         if not order_by:
             return query
@@ -84,13 +132,15 @@ class QueryBuilder:
             parts = order.strip().split()
             if len(parts) == 1:
                 # Just column name, default to ASC
-                order_clauses.append(f"{parts[0]} ASC")
+                sanitized_column = self.sanitize_identifier(parts[0])
+                order_clauses.append(f"{sanitized_column} ASC")
             elif len(parts) == 2 and parts[1].upper() in ['ASC', 'DESC']:
                 # Column name with direction
-                order_clauses.append(f"{parts[0]} {parts[1].upper()}")
+                sanitized_column = self.sanitize_identifier(parts[0])
+                order_clauses.append(f"{sanitized_column} {parts[1].upper()}")
             else:
-                # Invalid format, skip
-                continue
+                # Invalid format, raise error
+                raise ValueError(f"Invalid order_by format: {order}")
         
         if order_clauses:
             query = f"{query} ORDER BY {', '.join(order_clauses)}"

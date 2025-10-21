@@ -69,6 +69,10 @@ async def execute_custom_query(
     """
     Execute a custom SQL query with pagination, filtering, and ordering.
     
+    Security Note: This endpoint accepts user-provided SQL queries. It should only be
+    used in trusted environments or behind appropriate authentication/authorization.
+    Consider creating dedicated endpoints for specific queries in production.
+    
     Example request body:
     ```json
     {
@@ -80,10 +84,18 @@ async def execute_custom_query(
     """
     try:
         # Validate that it's a SELECT query
-        if not sql_query.strip().upper().startswith('SELECT'):
+        query_upper = sql_query.strip().upper()
+        if not query_upper.startswith('SELECT'):
             raise HTTPException(
                 status_code=400,
                 detail="Only SELECT queries are allowed"
+            )
+        
+        # Additional validation to prevent multiple statements
+        if ';' in sql_query.strip().rstrip(';'):
+            raise HTTPException(
+                status_code=400,
+                detail="Multiple SQL statements are not allowed"
             )
         
         result = execute_query_with_pagination(
@@ -96,6 +108,13 @@ async def execute_custom_query(
         )
         
         return QueryResponse(**result)
+    
+    except ValueError as e:
+        # Handle validation errors (e.g., invalid column names)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid query parameters: {str(e)}"
+        )
     
     except Exception as e:
         raise HTTPException(
