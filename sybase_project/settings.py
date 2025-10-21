@@ -69,22 +69,34 @@ WSGI_APPLICATION = 'sybase_project.wsgi.application'
 # Database configuration using SQLAlchemy
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Sybase database connection through SQLAlchemy
-DATABASES = {
-    'default': {
-        'ENGINE': 'sqlalchemy_sybase.base',
-        'NAME': os.getenv('DB_NAME', 'sybase_db'),
-        'USER': os.getenv('DB_USER', 'sa'),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5000'),
-        'OPTIONS': {
-            'driver': 'FreeTDS',
-            'TDS_Version': '5.0',
-            'charset': 'utf8',
+# Check if we should use Sybase or SQLite (for development/testing)
+USE_SYBASE = os.getenv('USE_SYBASE', 'True') == 'True'
+
+if USE_SYBASE:
+    # Sybase database connection through SQLAlchemy
+    DATABASES = {
+        'default': {
+            'ENGINE': 'sqlalchemy_sybase.base',
+            'NAME': os.getenv('DB_NAME', 'sybase_db'),
+            'USER': os.getenv('DB_USER', 'sa'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5000'),
+            'OPTIONS': {
+                'driver': 'FreeTDS',
+                'TDS_Version': '5.0',
+                'charset': 'utf8',
+            }
         }
     }
-}
+else:
+    # SQLite for development/testing (when Sybase is not available)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

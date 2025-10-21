@@ -13,7 +13,13 @@ from django.db.backends.base.validation import BaseDatabaseValidation
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.pool import NullPool
-import pyodbc
+
+try:
+    import pyodbc
+except ImportError:
+    # pyodbc might not be installed in development/testing environments
+    # It will be needed for actual Sybase connections
+    pyodbc = None
 
 
 class DatabaseFeatures(BaseDatabaseFeatures):
@@ -132,7 +138,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'iendswith': "LIKE UPPER(%s)",
     }
     
-    Database = pyodbc
+    # Use pyodbc if available, otherwise None (for development/testing)
+    Database = pyodbc if pyodbc else type('MockPyodbc', (), {})
     SchemaEditorClass = None
     
     features_class = DatabaseFeatures
