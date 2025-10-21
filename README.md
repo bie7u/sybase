@@ -49,14 +49,24 @@ DB_DRIVER=pymssql
 
 ### Starting the API Server
 
-Run the application using:
+**Option 1: Direct Python execution**
 ```bash
 python main.py
 ```
 
-Or with uvicorn directly:
+**Option 2: Using Uvicorn**
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Option 3: Using Docker**
+```bash
+# Build and run with docker-compose
+docker-compose up -d
+
+# Or build and run with Docker directly
+docker build -t sybase-api .
+docker run -p 8000:8000 --env-file .env sybase-api
 ```
 
 The API will be available at:
@@ -181,13 +191,30 @@ async def get_my_table_data(
 
 ## Architecture
 
-The application consists of several key modules:
+The application follows a modular architecture:
+
+### Core Modules
 
 - **`main.py`**: FastAPI application with endpoint definitions
-- **`database.py`**: Database connection and session management
-- **`query_builder.py`**: Query building utilities for pagination, filtering, and ordering
+- **`database.py`**: Database connection and session management with SQLAlchemy
+- **`query_builder.py`**: Query building utilities with security validations
 - **`models.py`**: Pydantic models for request/response validation
 - **`config.py`**: Configuration management using environment variables
+
+### Additional Files
+
+- **`example_usage.py`**: Example Python client demonstrating API usage
+- **`test_example.py`**: Example test cases for the API
+- **`requirements.txt`**: Production dependencies
+- **`requirements-dev.txt`**: Development and testing dependencies
+- **`Dockerfile`**: Docker container configuration
+- **`docker-compose.yml`**: Docker Compose orchestration
+
+### Documentation
+
+- **`README.md`**: Main documentation (this file)
+- **`QUICKSTART.md`**: Quick start guide
+- **`SECURITY.md`**: Security guidelines and best practices
 
 ## Query Builder
 
