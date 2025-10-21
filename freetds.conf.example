@@ -1,0 +1,25 @@
+# FreeTDS configuration file for Sybase connection
+# Copy this file to /etc/freetds/freetds.conf or ~/.freetds.conf
+
+[global]
+    # TDS protocol version
+    tds version = 5.0
+    # Default character set
+    client charset = UTF-8
+    # Enable debugging (set to 0 in production)
+    dump file = /tmp/freetds.log
+    debug flags = 0x4fff
+
+# Define your Sybase server
+[sybase_server]
+    host = localhost
+    port = 5000
+    tds version = 5.0
+    client charset = UTF-8
+
+# Example production server configuration
+[production_sybase]
+    host = your-sybase-server.example.com
+    port = 5000
+    tds version = 5.0
+    client charset = UTF-8
