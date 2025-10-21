@@ -274,14 +274,29 @@ Sprawdź:
 pip install sqlalchemy pyodbc
 ```
 
+## Dokumentacja
+
+Projekt zawiera kompletną dokumentację w języku polskim:
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Szybki start (3 minuty od instalacji do pierwszego API call)
+- **[USAGE.md](USAGE.md)** - Szczegółowe przykłady użycia API
+- **[API.md](API.md)** - Pełna dokumentacja API z przykładami
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architektura systemu i przepływ danych
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Przewodnik dla kontrybutorów
+- **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Podsumowanie projektu i funkcjonalności
+
 ## Licencja
 
-MIT
+MIT License - projekt open source
 
 ## Autor
 
-bie7u
+[bie7u](https://github.com/bie7u)
 
 ## Wsparcie
 
-W razie problemów, utwórz issue w repozytorium GitHub.
+W razie problemów:
+- Sprawdź dokumentację w plikach .md
+- Utwórz issue w repozytorium: https://github.com/bie7u/sybase/issues
+- Zobacz przykłady w USAGE.md
+- Sprawdź QUICKSTART.md dla podstawowej konfiguracji
