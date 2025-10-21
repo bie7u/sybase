@@ -260,11 +260,16 @@ def execute_query_with_pagination(
     """
     Execute a query with pagination, filtering, and ordering.
     
+    Security Note: The base_query parameter accepts user-provided SQL, which is
+    intentional functionality. Callers must validate that base_query is a SELECT
+    statement before calling this function. Column names in filters and order_by
+    are validated using identifier validation to prevent SQL injection.
+    
     Args:
         db: Database session
-        base_query: Base SQL SELECT query
-        filters: Dictionary of column_name: value pairs
-        order_by: List of column names with optional direction
+        base_query: Base SQL SELECT query (must be validated by caller)
+        filters: Dictionary of column_name: value pairs (column names are validated)
+        order_by: List of column names with optional direction (column names are validated)
         page: Page number (1-indexed)
         page_size: Number of records per page
         

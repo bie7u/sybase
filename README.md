@@ -12,6 +12,10 @@ A FastAPI-based REST API for querying Sybase databases with built-in support for
 - 🔒 **Raw SQL Support**: Execute custom SQL queries with safety checks
 - 📝 **Auto-generated API Documentation**: Interactive Swagger UI and ReDoc
 
+## Quick Start
+
+See [QUICKSTART.md](QUICKSTART.md) for a 5-minute getting started guide.
+
 ## Installation
 
 1. Clone the repository:
@@ -210,10 +214,20 @@ count_query, count_params = builder.get_count_query(
 
 ## Security Considerations
 
-1. **SQL Injection Prevention**: The query builder uses parameterized queries to prevent SQL injection
+This API implements several security measures:
+
+1. **SQL Injection Prevention**: 
+   - Parameterized queries for all filter values
+   - Strict identifier validation for column names
+   - Query structure validation
 2. **Query Validation**: Only SELECT queries are allowed in the custom query endpoint
 3. **Input Validation**: Pydantic models validate all input parameters
 4. **Connection Pooling**: SQLAlchemy manages database connections securely
+
+**Important:** The `/query` endpoint accepts user-provided SQL queries. For production use, it's recommended to:
+- Place this endpoint behind authentication/authorization
+- Consider disabling it and using dedicated endpoints instead
+- Review [SECURITY.md](SECURITY.md) for detailed security guidelines
 
 ## Configuration
 
