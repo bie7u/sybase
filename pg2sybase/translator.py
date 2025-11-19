@@ -11,7 +11,7 @@ Key differences handled:
 - Date/time functions
 - SERIAL → IDENTITY
 - RETURNING clause
-- Identifier quoting (" → [])
+- Double-quoted identifiers are preserved (Sybase supports them with quoted_identifier option)
 """
 
 import re
@@ -156,36 +156,9 @@ class PostgreSQLToSybaseTranslator:
         # In PostgreSQL, " is for identifiers, ' is for strings
         # In Sybase, [] or " can be used for identifiers (depending on settings), ' for strings
         
-        parts = []
-        in_string = False
-        in_identifier = False
-        i = 0
-        
-        while i < len(query):
-            char = query[i]
-            
-            # Handle string literals (single quotes)
-            if char == "'" and (i == 0 or query[i-1] != '\\'):
-                in_string = not in_string
-                parts.append(char)
-                i += 1
-                continue
-            
-            # Handle identifier quoting (double quotes) - only when not in string
-            if not in_string and char == '"':
-                if not in_identifier:
-                    in_identifier = True
-                    parts.append('[')
-                else:
-                    in_identifier = False
-                    parts.append(']')
-                i += 1
-                continue
-            
-            parts.append(char)
-            i += 1
-        
-        return ''.join(parts)
+        # Note: Sybase ASE supports double quotes for identifiers when quoted_identifier option is ON
+        # We keep double quotes as-is instead of converting to brackets
+        return query
     
     def _convert_limit_offset(self, query):
         """Convert PostgreSQL LIMIT/OFFSET to Sybase TOP."""

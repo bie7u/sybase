@@ -10,7 +10,6 @@ This translator automatically converts PostgreSQL-specific SQL syntax to Sybase-
 - String concatenation (|| → +)
 - Functions (NOW(), LENGTH(), etc.)
 - Pagination (LIMIT/OFFSET → TOP/START AT)
-- Identifier quoting (" → [])
 - Case-insensitive search (ILIKE)
 - And more...
 
@@ -104,10 +103,11 @@ sybase_query = translator.translate(postgresql_query)
 | TRUE | 1 | Boolean true |
 | FALSE | 0 | Boolean false |
 | \|\| | + | String concatenation |
-| "identifier" | [identifier] | Identifier quoting |
 | LIMIT n | TOP n | Result limiting |
 | LIMIT n OFFSET m | TOP n START AT m+1 | Pagination |
 | ILIKE | UPPER() LIKE UPPER() | Case-insensitive match |
+
+**Note:** Double-quoted identifiers are preserved as-is. Sybase ASE supports double quotes for identifiers when the `quoted_identifier` option is enabled (which is the default in most Sybase configurations).
 
 ## Examples
 
@@ -159,10 +159,10 @@ LIMIT 5 OFFSET 10"""
 
 sybase = translate_postgresql_to_sybase(postgresql)
 # SELECT TOP 5 START AT 11 
-#     [user_id],
+#     "user_id",
 #     first_name + ' ' + last_name AS full_name,
 #     LEN(email) AS email_length
-# FROM [users]
+# FROM "users"
 # WHERE active = 1 
 #     AND UPPER(email) LIKE UPPER('%@example.com')
 ```
