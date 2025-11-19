@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ## Quick Start
 
 ```python
-from translator import translate_postgresql_to_sybase
+from pg2sybase import translate_postgresql_to_sybase
 
 # Simple translation
 postgresql_query = "SELECT * FROM users WHERE active = TRUE LIMIT 10"
@@ -36,20 +36,36 @@ print(sybase_query)
 
 ## Usage
 
-### Basic Usage
+### Using as a Python Library
 
 ```python
-from translator import translate_postgresql_to_sybase
+from pg2sybase import translate_postgresql_to_sybase
 
 # Translate a query
 result = translate_postgresql_to_sybase("SELECT * FROM users WHERE deleted = FALSE")
 # Result: SELECT * FROM users WHERE deleted = 0
 ```
 
+### Using the Command-Line Interface
+
+```bash
+# Direct query
+python cli.py "SELECT * FROM users WHERE active = TRUE LIMIT 10"
+
+# From file
+python cli.py -f input.sql -o output.sql
+
+# From stdin
+echo "SELECT NOW()" | python cli.py
+
+# Pipeline
+cat queries.sql | python cli.py > sybase_queries.sql
+```
+
 ### Using the Translator Class
 
 ```python
-from translator import PostgreSQLToSybaseTranslator
+from pg2sybase import PostgreSQLToSybaseTranslator
 
 translator = PostgreSQLToSybaseTranslator()
 sybase_query = translator.translate(postgresql_query)
