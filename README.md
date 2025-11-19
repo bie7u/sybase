@@ -106,8 +106,10 @@ sybase_query = translator.translate(postgresql_query)
 | \|\| | + | String concatenation |
 | "identifier" | [identifier] | Identifier quoting |
 | LIMIT n | TOP n | Result limiting |
-| LIMIT n OFFSET m | TOP n START AT m+1 | Pagination |
+| LIMIT n OFFSET m | TOP n START AT m+1 (with * in SELECT) | Pagination (Sybase IQ compatible) |
 | ILIKE | UPPER() LIKE UPPER() | Case-insensitive match |
+
+**Note on Pagination**: When using `LIMIT ... OFFSET ...` (which translates to `TOP ... START AT ...`), the column list in the SELECT clause is automatically replaced with `*` for Sybase IQ compatibility. Sybase IQ requires that `TOP ... START AT ...` be immediately followed by the column list without table qualifiers, so using `*` ensures compatibility.
 
 ## Examples
 
@@ -145,7 +147,7 @@ sybase = translate_postgresql_to_sybase(postgresql)
 # )
 ```
 
-### Example 4: Complex Query
+### Example 4: Complex Query with Pagination
 
 ```python
 postgresql = """SELECT 
@@ -158,13 +160,25 @@ WHERE active = TRUE
 LIMIT 5 OFFSET 10"""
 
 sybase = translate_postgresql_to_sybase(postgresql)
-# SELECT TOP 5 START AT 11 
-#     [user_id],
-#     first_name + ' ' + last_name AS full_name,
-#     LEN(email) AS email_length
+# SELECT TOP 5 START AT 11 *
 # FROM [users]
 # WHERE active = 1 
 #     AND UPPER(email) LIKE UPPER('%@example.com')
+# 
+# Note: Column list replaced with * for Sybase IQ compatibility with TOP START AT
+```
+
+### Example 5: Sybase IQ Pagination Compatibility
+
+```python
+# Sybase IQ has specific requirements for TOP START AT syntax
+postgresql = 'SELECT "id", "name" FROM "dba.users" ORDER BY "id" DESC LIMIT 5 OFFSET 1'
+sybase = translate_postgresql_to_sybase(postgresql)
+# SELECT TOP 5 START AT 2 *
+# FROM [dba.users] ORDER BY [id] DESC
+# 
+# The column list is replaced with * to avoid table-qualified column names
+# which are not supported in Sybase IQ with TOP START AT
 ```
 
 ## Running Examples
