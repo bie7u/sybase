@@ -89,13 +89,11 @@ class TestPostgreSQLToSybaseTranslator(unittest.TestCase):
         self.assertNotIn('LENGTH', result)
     
     def test_identifier_quoting(self):
-        """Test conversion of double quotes to brackets."""
+        """Test that double quotes are preserved for identifiers."""
         query = 'SELECT "user_name" FROM "users"'
         result = self.translator.translate(query)
-        self.assertIn('[user_name]', result)
-        self.assertIn('[users]', result)
-        self.assertNotIn('"user_name"', result)
-        self.assertNotIn('"users"', result)
+        self.assertIn('"user_name"', result)
+        self.assertIn('"users"', result)
     
     def test_identifier_quoting_preserves_string_literals(self):
         """Test that string literals with single quotes are preserved."""
@@ -143,8 +141,8 @@ class TestPostgreSQLToSybaseTranslator(unittest.TestCase):
         result = self.translator.translate(query)
         
         # Check multiple conversions
-        self.assertIn('[user_id]', result)
-        self.assertIn('[users]', result)
+        self.assertIn('"user_id"', result)
+        self.assertIn('"users"', result)
         self.assertIn('+', result)  # String concatenation
         self.assertIn('GETDATE()', result)
         self.assertIn('= 1', result)  # TRUE -> 1
@@ -194,7 +192,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test query with both single and double quotes."""
         query = 'SELECT "column_name" FROM table WHERE value = \'test\''
         result = self.translator.translate(query)
-        self.assertIn('[column_name]', result)
+        self.assertIn('"column_name"', result)
         self.assertIn("'test'", result)
     
     def test_multiple_limit_patterns(self):
