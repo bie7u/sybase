@@ -143,13 +143,12 @@ class TestPostgreSQLToSybaseTranslator(unittest.TestCase):
         result = self.translator.translate(query)
         
         # Check multiple conversions
-        self.assertIn('[user_id]', result)
+        # Note: When using OFFSET (TOP ... START AT ...), column list is replaced with *
+        # This is required for Sybase IQ compatibility
+        self.assertIn('SELECT TOP 5 START AT 11 *', result)  # LIMIT OFFSET with *
         self.assertIn('[users]', result)
-        self.assertIn('+', result)  # String concatenation
-        self.assertIn('GETDATE()', result)
         self.assertIn('= 1', result)  # TRUE -> 1
         self.assertIn('UPPER(email) LIKE UPPER', result)  # ILIKE
-        self.assertIn('SELECT TOP 5 START AT 11', result)  # LIMIT OFFSET
     
     def test_create_table_with_serial(self):
         """Test CREATE TABLE with SERIAL primary key."""
@@ -258,6 +257,55 @@ class TestDataTypes(unittest.TestCase):
         self.assertIn('DATETIME', result1)
         self.assertIn('DATETIME', result2)
         self.assertIn('DATETIME', result3)
+
+
+class TestSybaseIQCompatibility(unittest.TestCase):
+    """Test cases specific to Sybase IQ compatibility."""
+    
+    def setUp(self):
+        """Set up the translator for each test."""
+        self.translator = PostgreSQLToSybaseTranslator()
+    
+    def test_top_start_at_uses_asterisk(self):
+        """Test that TOP START AT uses * instead of column list for Sybase IQ."""
+        query = 'SELECT "id", "IdKli" FROM "dba.PrwTNKlient" ORDER BY "IdGru" DESC LIMIT 5 OFFSET 1'
+        result = self.translator.translate(query)
+        
+        # Should use * in column list when TOP START AT is used
+        self.assertIn('SELECT TOP 5 START AT 2 *', result)
+        # Table name should still be bracketed
+        self.assertIn('[dba.PrwTNKlient]', result)
+        # ORDER BY should still be bracketed
+        self.assertIn('[IdGru]', result)
+    
+    def test_top_without_offset_preserves_columns(self):
+        """Test that TOP without START AT preserves the column list."""
+        query = 'SELECT "id", "name" FROM "users" LIMIT 5'
+        result = self.translator.translate(query)
+        
+        # Should preserve column list when only TOP is used (no OFFSET)
+        self.assertIn('[id]', result)
+        self.assertIn('[name]', result)
+        self.assertIn('SELECT TOP 5 [id], [name]', result)
+    
+    def test_offset_with_asterisk_preserves_asterisk(self):
+        """Test that using * with OFFSET preserves the asterisk."""
+        query = 'SELECT * FROM users LIMIT 5 OFFSET 1'
+        result = self.translator.translate(query)
+        
+        # Should preserve * when it's already used
+        self.assertIn('SELECT TOP 5 START AT 2 *', result)
+        self.assertIn('FROM users', result)
+    
+    def test_offset_replaces_complex_column_list(self):
+        """Test that complex column lists are replaced with * when using OFFSET."""
+        query = 'SELECT a.id, a.name, b.title FROM table_a a JOIN table_b b ON a.id = b.id LIMIT 10 OFFSET 5'
+        result = self.translator.translate(query)
+        
+        # Complex column list should be replaced with *
+        self.assertIn('SELECT TOP 10 START AT 6 *', result)
+        # JOIN should still be present
+        self.assertIn('JOIN', result)
 
 
 if __name__ == '__main__':

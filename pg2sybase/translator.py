@@ -205,20 +205,35 @@ class PostgreSQLToSybaseTranslator:
             
             # Add TOP clause after SELECT
             if offset_value:
-                # Sybase START AT is 1-based, so we add 1
+                # Sybase IQ requires special handling for TOP ... START AT ...
+                # The column list must be * to avoid qualified table names
+                # which are not supported in Sybase IQ with START AT
                 start_at = int(offset_value) + 1
                 top_clause = f' TOP {limit_value} START AT {start_at}'
+                
+                # Replace column list with * for Sybase IQ compatibility
+                # Pattern: SELECT ... FROM
+                select_from_pattern = r'(\bSELECT\b)(.*?)(\bFROM\b)'
+                def replace_with_star(m):
+                    return f'{m.group(1)}{top_clause} *\n{m.group(3)}'
+                
+                query = re.sub(
+                    select_from_pattern,
+                    replace_with_star,
+                    query,
+                    count=1,
+                    flags=re.IGNORECASE | re.DOTALL
+                )
             else:
                 top_clause = f' TOP {limit_value}'
-            
-            # Insert TOP after SELECT keyword
-            query = re.sub(
-                r'\bSELECT\b',
-                f'SELECT{top_clause}',
-                query,
-                count=1,
-                flags=re.IGNORECASE
-            )
+                # Insert TOP after SELECT keyword
+                query = re.sub(
+                    r'\bSELECT\b',
+                    f'SELECT{top_clause}',
+                    query,
+                    count=1,
+                    flags=re.IGNORECASE
+                )
         
         return query
     
